@@ -18,9 +18,12 @@ void updateState(State nextState);
 void setup() {
   previousState = EMPTY;
   currentState = EMPTY;
+
+
+  Serial.begin(9600);
   
   // other init
-  pinMode(inPin, INPUT);
+  pinMode(inPin, INPUT_PULLUP);
 
   updateState(WAITING); // enter FSM
 }
@@ -31,38 +34,42 @@ void loop() {
   if (currentState == WAITING)
   {
     // wait for sensor detection
-    while (!digitalRead(inPin)) 
+    while (digitalRead(inPin)) 
     {
-      delay(100);
+      
     }
+    delay(300);
 
     updateState(READY); // call when sensor triggers
   } else if (currentState == READY) 
   {
     // wait for some condition to trigger cleaning, maybe a timeout time, or another sensor detection
-    while (!digitalRead(inPin)) 
+    while (digitalRead(inPin)) 
     {
-      delay(100);
+      
     }
+    delay(300);
 
     updateState(CLEANING); // call when condition is met and we need to begin cleaning
   } else if (currentState == CLEANING) 
   {
     // move along rail until endpoint
     // toggle/actuate spray bottle continuously
-    while (!digitalRead(inPin)) 
+    while (digitalRead(inPin)) 
     {
-      delay(100);
+      
     }
+    delay(300);
   
     updateState(RESET); // call when we reach endpoint
   } else if (currentState == RESET) 
   {
     // move along rail until start point
-    while (!digitalRead(inPin)) 
+    while (digitalRead(inPin)) 
     {
-      delay(100);
+      
     }
+    delay(300);
 
     updateState(WAITING); // call when we reach start point
   } else if (currentState == EMPTY) 
