@@ -18,9 +18,13 @@ typedef enum State {WAITING = 0, READY = 1, CLEANING = 2, RESET = 3, EMPTY = 4};
 State currentState;
 State previousState; // might not be needed
 
+int statusLED = 4;
 int stateToggle = 7;
 int onButton = 8;
-int statusLED = 4;
+int trigPin = 11;    // Trigger
+int echoPin = 12;    // Echo
+
+double duration, cm, prev_cm;
 
 // called to change the state
 // add variables to declaration if they are needed in the function
@@ -29,6 +33,7 @@ void updateState(State nextState);
 void setup() {
   previousState = EMPTY;
   currentState = EMPTY;
+  prev_cm = 150;
 
   Serial.begin(9600);
   
@@ -36,6 +41,8 @@ void setup() {
   pinMode(stateToggle, INPUT_PULLUP);
   pinMode(onButton, INPUT_PULLUP);
   pinMode(statusLED, OUTPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
 
   updateState(EMPTY); // enter FSM
 }
@@ -59,23 +66,63 @@ void loop() {
 
   if (currentState == WAITING)
   {
-    // wait for sensor detection
-    if (!digitalRead(stateToggle)) 
+    // ultrasonic sensor detection
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(5);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    duration = pulseIn(echoPin, HIGH);
+    cm = ((double)duration/2.0) / 29.1;
+
+    if (cm > 200) // error correction
     {
-      updateState(READY); // call when sensor triggers
-      delay(300);
+      cm = prev_cm;
+    }  else 
+    {
+      prev_cm = cm;
     }
 
+    // Serial.println(cm);
+    
+    // wait for sensor detection
+    if ((cm < 30.0) || (!digitalRead(stateToggle))) 
+    {
+      updateState(READY); // call when sensor triggers
+    }
+
+    delay(150);
 
   } else if (currentState == READY) 
   {
-    // wait for some condition to trigger cleaning, maybe a timeout time, or another sensor detection
-    while (!digitalRead(stateToggle)) 
+    // ultrasonic sensor detection
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(5);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    duration = pulseIn(echoPin, HIGH);
+    cm = ((double)duration/2.0) / 29.1;
+
+    if (cm > 200) // error correction
     {
-      updateState(CLEANING); // call when condition is met and we need to begin cleaning
-      delay(300);
+      cm = prev_cm;
+    }  else 
+    {
+      prev_cm = cm;
     }
 
+    // Serial.println(cm);
+    
+    // wait for some condition to trigger cleaning, maybe a timeout time, or another sensor detection
+    if ((cm > 30.0) || (!digitalRead(stateToggle))) 
+    {
+      updateState(CLEANING); // call when condition met
+    }
+
+    delay(150);
 
   } else if (currentState == CLEANING) 
   {
