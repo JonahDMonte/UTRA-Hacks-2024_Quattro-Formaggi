@@ -6,10 +6,21 @@ typedef enum State {WAITING = 0, READY = 1, CLEANING = 2, RESET = 3, EMPTY = 4};
 // EMPTY - pseudo-null state, in case needed
 // Should be rather one way: WAITING -> READY -> CLEANING -> RESET -> WAITING (...)
 
+
+/* Robot features/sensors and when they are active:
+  - "UV" Lights (CLEANING)
+  - Spray Bottle with motors (CLEANING)
+  - Rail movement based on set rotation amount (CLEANING and RESET)
+  - 
+  - Accelerometer available if needed
+*/
+
 State currentState;
 State previousState; // might not be needed
 
-int inPin = 7;
+int stateToggle = 7;
+int onButton = 8;
+int statusLED = 4;
 
 // called to change the state
 // add variables to declaration if they are needed in the function
@@ -19,62 +30,80 @@ void setup() {
   previousState = EMPTY;
   currentState = EMPTY;
 
-
   Serial.begin(9600);
   
   // other init
-  pinMode(inPin, INPUT_PULLUP);
+  pinMode(stateToggle, INPUT_PULLUP);
+  pinMode(onButton, INPUT_PULLUP);
+  pinMode(statusLED, OUTPUT);
 
-  updateState(WAITING); // enter FSM
+  updateState(EMPTY); // enter FSM
 }
 
 // for constant code execution WHILE IN STATE
 void loop() {
-  
+
+  if (currentState == EMPTY) 
+  {
+    digitalWrite(statusLED, LOW);
+  } else 
+  {
+    digitalWrite(statusLED, HIGH);
+  }
+
+  if ((currentState != EMPTY) && (!digitalRead(onButton))) 
+  {
+    updateState(EMPTY);
+    delay(300);
+  }
+
   if (currentState == WAITING)
   {
     // wait for sensor detection
-    while (digitalRead(inPin)) 
+    if (!digitalRead(stateToggle)) 
     {
-      
+      updateState(READY); // call when sensor triggers
+      delay(300);
     }
-    delay(300);
 
-    updateState(READY); // call when sensor triggers
+
   } else if (currentState == READY) 
   {
     // wait for some condition to trigger cleaning, maybe a timeout time, or another sensor detection
-    while (digitalRead(inPin)) 
+    while (!digitalRead(stateToggle)) 
     {
-      
+      updateState(CLEANING); // call when condition is met and we need to begin cleaning
+      delay(300);
     }
-    delay(300);
 
-    updateState(CLEANING); // call when condition is met and we need to begin cleaning
+
   } else if (currentState == CLEANING) 
   {
     // move along rail until endpoint
     // toggle/actuate spray bottle continuously
-    while (digitalRead(inPin)) 
+    while (!digitalRead(stateToggle)) 
     {
-      
+      delay(300);
+      updateState(RESET); // call when we reach endpoint    
     }
-    delay(300);
   
-    updateState(RESET); // call when we reach endpoint
+
   } else if (currentState == RESET) 
   {
     // move along rail until start point
-    while (digitalRead(inPin)) 
+    while (!digitalRead(stateToggle)) 
     {
-      
+      delay(300);
+      updateState(WAITING); // call when we reach start point
     }
-    delay(300);
 
-    updateState(WAITING); // call when we reach start point
   } else if (currentState == EMPTY) 
   {
-    // used if needed
+    if (!digitalRead(onButton)) 
+    {
+      delay(300);
+      updateState(WAITING); // call when ON button pressed
+    }
   }
 
 }
