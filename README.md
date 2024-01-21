@@ -1,4 +1,5 @@
 # UTRA-Hacks-2024_Quattro-Formaggi
+Billions of bacteria and germs claim the surfaces we touch as home, Sanitation John sends them an eviction notice, automatically and efficiently.
 
 ## Inspiration
 Infectious and contaminated surfaces and their consequences.
