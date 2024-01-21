@@ -1,6 +1,9 @@
 # UTRA Hacks 2024 - Team Quattro Formaggi
 Billions of bacteria and germs claim the surfaces we touch as home, Sanitation John sends them an eviction notice, automatically and efficiently.
 
+Uses 2 buttons to override its state and turn it on/off, in addition to a power switch.
+With the Arduino flashed, simply plug it in and turn it on with the button and switch, then watch it go to work.
+
 Find it on the devpost here: https://devpost.com/software/sanitation-john
 
 ## Inspiration
