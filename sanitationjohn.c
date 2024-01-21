@@ -115,33 +115,28 @@ void updateState(State nextState) {
   
   if (nextState == WAITING) 
   {
-    Serial.print("Transitioning to state ");
-    Serial.println(nextState, DEC);
+    Serial.println("Transitioning to state WAITING");
     
     // maybe enable sensors or init them
   } else if (nextState == READY) 
   {
-    Serial.print("Transitioning to state ");
-    Serial.println(nextState, DEC);
+    Serial.println("Transitioning to state READY");
 
     // maybe init timeout timer
   } else if (nextState == CLEANING) 
   {
-    Serial.print("Transitioning to state ");
-    Serial.println(nextState, DEC);
+    Serial.println("Transitioning to state CLEANING");
 
     // maybe disable other sensors
     // turn on lights
   } else if (nextState == RESET) 
   {
-    Serial.print("Transitioning to state ");
-    Serial.println(nextState, DEC);
+    Serial.println("Transitioning to state RESET");
 
     // disable lights
   } else if (nextState == EMPTY) 
   {
-    Serial.print("Transitioning to state ");
-    Serial.println(nextState, DEC);
+    Serial.println("Transitioning to state EMPTY");
     
     // used if needed
   } else // something went wrong if here
@@ -151,6 +146,5 @@ void updateState(State nextState) {
 
     Serial.print("Error: Unknown state encountered when transitioning from state ");
     Serial.println(previousState, DEC);
-
   }
 }
