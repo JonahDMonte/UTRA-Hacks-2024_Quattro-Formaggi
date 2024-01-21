@@ -23,11 +23,11 @@ typedef enum State {WAITING = 0, READY = 1, CLEANING = 2, RESET = 3, EMPTY = 4};
 State currentState;
 State previousState; // might not be needed
 
+int onButton = 2;
 int statusLED = 4;
 int sprayPin = 5;
 int lightsPin= 6;
 int stateToggle = 7;
-int onButton = 8;
 int trigPin = 12;
 int echoPin = 13;
 
