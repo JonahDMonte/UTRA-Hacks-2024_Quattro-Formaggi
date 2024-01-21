@@ -1,3 +1,8 @@
+#include <Stepper.h>
+
+const int stepsPerRevolution = 600;
+Stepper myStepper = Stepper(stepsPerRevolution, 8, 9, 10, 11); // stepper init on pins 8-11
+
 typedef enum State {WAITING = 0, READY = 1, CLEANING = 2, RESET = 3, EMPTY = 4};
 // WAITING - nothing is happenening, default state until sensor triggers
 // READY - object/action detected, waiting for something before commencing cleaning (ex: hand leaves detection range
@@ -19,10 +24,12 @@ State currentState;
 State previousState; // might not be needed
 
 int statusLED = 4;
+int sprayPin = 5;
+int lightsPin= 6;
 int stateToggle = 7;
 int onButton = 8;
-int trigPin = 11;    // Trigger
-int echoPin = 12;    // Echo
+int trigPin = 12;
+int echoPin = 13;
 
 double duration, cm, prev_cm;
 
@@ -35,14 +42,18 @@ void setup() {
   currentState = EMPTY;
   prev_cm = 150;
 
-  Serial.begin(9600);
+  myStepper.setSpeed(120); // set motor RPM
   
-  // other init
+  // pin init
+  pinMode(statusLED, OUTPUT);
+  pinMode(sprayPin, OUTPUT);
+  pinMode(lightsPin, OUTPUT);
   pinMode(stateToggle, INPUT_PULLUP);
   pinMode(onButton, INPUT_PULLUP);
-  pinMode(statusLED, OUTPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
+  Serial.begin(9600);
 
   updateState(EMPTY); // enter FSM
 }
@@ -61,11 +72,11 @@ void loop() {
   if ((currentState != EMPTY) && (!digitalRead(onButton))) 
   {
     updateState(EMPTY);
-    delay(300);
+    delay(500);
   }
 
   if (currentState == WAITING)
-  {
+  {   
     // ultrasonic sensor detection
     digitalWrite(trigPin, LOW);
     delayMicroseconds(5);
@@ -125,22 +136,44 @@ void loop() {
     delay(150);
 
   } else if (currentState == CLEANING) 
-  {
+  { 
     // move along rail until endpoint
-    // toggle/actuate spray bottle continuously
-    while (!digitalRead(stateToggle)) 
+    myStepper.step(600);
+    
+    // delay(200);
+
+    if (!digitalRead(onButton)) // override
     {
-      delay(300);
-      updateState(RESET); // call when we reach endpoint    
+      updateState(EMPTY);
+    } else 
+    {
+      updateState(RESET);
+    }
+
+    if (!digitalRead(stateToggle)) 
+    {
+      delay(150);
+      updateState(RESET); // call when we reach endpoint
     }
   
-
   } else if (currentState == RESET) 
   {
-    // move along rail until start point
-    while (!digitalRead(stateToggle)) 
+    // move back to start along rail
+    myStepper.step(-600);
+
+    // delay(200);
+
+    if (!digitalRead(onButton)) // override
     {
-      delay(300);
+      updateState(EMPTY);
+    } else 
+    {
+      updateState(WAITING);
+    }
+    
+    if (!digitalRead(stateToggle)) 
+    {
+      delay(150);
       updateState(WAITING); // call when we reach start point
     }
 
@@ -148,8 +181,8 @@ void loop() {
   {
     if (!digitalRead(onButton)) 
     {
-      delay(300);
       updateState(WAITING); // call when ON button pressed
+      delay(500);
     }
   }
 
@@ -163,29 +196,36 @@ void updateState(State nextState) {
   if (nextState == WAITING) 
   {
     Serial.println("Transitioning to state WAITING");
+
+    digitalWrite(lightsPin, LOW); // reset lights
+    digitalWrite(sprayPin, LOW); // disable spray bottle
     
-    // maybe enable sensors or init them
   } else if (nextState == READY) 
   {
     Serial.println("Transitioning to state READY");
 
-    // maybe init timeout timer
   } else if (nextState == CLEANING) 
   {
     Serial.println("Transitioning to state CLEANING");
 
-    // maybe disable other sensors
-    // turn on lights
+    digitalWrite(lightsPin, HIGH); // enable lights
+    digitalWrite(sprayPin, HIGH); // toggle/actuate spray bottle continuously
+
   } else if (nextState == RESET) 
   {
     Serial.println("Transitioning to state RESET");
 
-    // disable lights
+    digitalWrite(sprayPin, LOW); // disable spray bottle
+
   } else if (nextState == EMPTY) 
   {
     Serial.println("Transitioning to state EMPTY");
+
+    // disable everything
+    digitalWrite(sprayPin, LOW); // disable spray bottle
+    digitalWrite(lightsPin, LOW); // disable lights
+    digitalWrite(trigPin, LOW); // disable ultrasonic sensor
     
-    // used if needed
   } else // something went wrong if here
   {
     previousState = currentState;
