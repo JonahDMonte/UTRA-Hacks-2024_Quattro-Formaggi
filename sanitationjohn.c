@@ -1,7 +1,8 @@
 #include <Stepper.h>
 
-const int stepsPerRevolution = 600;
-Stepper myStepper = Stepper(stepsPerRevolution, 8, 9, 10, 11); // stepper init on pins 8-11
+const int stepsPerRev = 600;
+const int numRevs = 10;
+Stepper myStepper = Stepper(stepsPerRev, 8, 9, 10, 11); // stepper init on pins 8-11
 
 typedef enum State {WAITING = 0, READY = 1, CLEANING = 2, RESET = 3, EMPTY = 4};
 // WAITING - nothing is happenening, default state until sensor triggers
@@ -26,8 +27,9 @@ State previousState; // might not be needed
 int stateToggle = 2;
 int onButton = 3;
 int statusLED = 4;
-int sprayPin = 5;
-int lightsPin= 6;
+int statusLEDready = 5;
+int sprayPin = 6;
+int lightsPin= 7;
 int trigPin = 12;
 int echoPin = 13;
 
@@ -52,6 +54,13 @@ void setup() {
   pinMode(onButton, INPUT_PULLUP);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+  pinMode(statusLEDready, OUTPUT);
+
+  // nema 17 motor heat fix attempt
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  pinMode(11, OUTPUT);
 
   Serial.begin(9600);
 
@@ -138,7 +147,13 @@ void loop() {
   } else if (currentState == CLEANING) 
   { 
     // move along rail until endpoint
-    myStepper.step(600);
+    myStepper.step((numRevs * stepsPerRev));
+
+    // heat fix attempt
+    digitalWrite(8, LOW);
+    digitalWrite(9, LOW);
+    digitalWrite(10, LOW);
+    digitalWrite(11, LOW);
     
     // delay(200);
 
@@ -159,7 +174,13 @@ void loop() {
   } else if (currentState == RESET) 
   {
     // move back to start along rail
-    myStepper.step(-600);
+    myStepper.step(-(numRevs * stepsPerRev));
+
+    // heat fix attempt
+    digitalWrite(8, LOW);
+    digitalWrite(9, LOW);
+    digitalWrite(10, LOW);
+    digitalWrite(11, LOW);
 
     // delay(200);
 
@@ -204,10 +225,13 @@ void updateState(State nextState) {
   {
     Serial.println("Transitioning to state READY");
 
+    digitalWrite(statusLEDready, HIGH);
+    
   } else if (nextState == CLEANING) 
   {
     Serial.println("Transitioning to state CLEANING");
 
+    digitalWrite(statusLEDready, LOW);
     digitalWrite(lightsPin, HIGH); // enable lights
     digitalWrite(sprayPin, HIGH); // toggle/actuate spray bottle continuously
 
@@ -216,6 +240,8 @@ void updateState(State nextState) {
     Serial.println("Transitioning to state RESET");
 
     digitalWrite(sprayPin, LOW); // disable spray bottle
+
+    delay(500);
 
   } else if (nextState == EMPTY) 
   {
