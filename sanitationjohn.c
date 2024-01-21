@@ -235,11 +235,14 @@ void updateState(State nextState) {
     digitalWrite(lightsPin, HIGH); // enable lights
     digitalWrite(sprayPin, HIGH); // toggle/actuate spray bottle continuously
 
+    delay(5000);
+    digitalWrite(sprayPin, LOW); // turn off after some time
+
   } else if (nextState == RESET) 
   {
     Serial.println("Transitioning to state RESET");
 
-    digitalWrite(sprayPin, LOW); // disable spray bottle
+    // digitalWrite(sprayPin, LOW); // disable spray bottle
 
     delay(500);
 
