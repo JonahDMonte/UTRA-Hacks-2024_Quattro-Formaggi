@@ -1,4 +1,4 @@
-# UTRA-Hacks-2024_Quattro-Formaggi
+# UTRA Hacks 2024 - Team Quattro Formaggi
 Billions of bacteria and germs claim the surfaces we touch as home, Sanitation John sends them an eviction notice, automatically and efficiently.
 
 Find it on the devpost here: https://devpost.com/software/sanitation-john
